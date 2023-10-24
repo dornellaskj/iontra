@@ -1,6 +1,6 @@
 
 resource "aws_vpc" "vpc" {
-  cidr_block = "10.0.0.0/16"
+  cidr_block = var.vpc_cidr_block
   enable_dns_hostnames = true
   enable_dns_support   = true
   tags = {
@@ -19,15 +19,9 @@ resource "aws_eip" "nat_eip" {
   depends_on = [aws_internet_gateway.ig]
 }
 
-resource "aws_subnet" "subnet" {
-  vpc_id = aws_vpc.vpc.id
-  cidr_block = "10.0.1.0/24"
-  
-}
-
 resource "aws_nat_gateway" "nat" {
   allocation_id = "${aws_eip.nat_eip.id}"
-  subnet_id     = "${element(aws_subnet.subnet.*.id, 0)}"
+  subnet_id     = "${element(module.subnets.public_subnet_cidrs.*.id, 0)}"
   depends_on    = [aws_internet_gateway.ig]
   tags = {
     Name        = "nat"
@@ -41,6 +35,8 @@ module "subnets" {
   vpc_name = var.vpc_name
   vpc_id = aws_vpc.vpc.id
   internet_gateway_id = aws_internet_gateway.ig.id
+  public_subnet_cidrs = var.public_subnet_cidrs
+  private_subnet_cidrs = var.private_subnet_cidrs
 }
 
 module "routing" {

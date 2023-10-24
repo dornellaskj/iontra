@@ -4,8 +4,8 @@ variable "region" {
 }
 
 variable "vpc_name" {
-    type = string
-    default = "VPC-A"
+  type = string
+  default = "VPC-A"
 }
 
 variable "vpc_id" {
@@ -15,7 +15,7 @@ variable "vpc_id" {
 
 variable "availability_zones" {
   type = list(string)
-  default = ["us-east-1a", "us-east-1b", "us-east-1c"] #need to figure out how to inject variables here
+  default = ["us-east-1a", "us-east-1b", "us-east-1c"]
 }
 
 variable "public_subnet_cidrs" {
