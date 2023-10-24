@@ -21,3 +21,12 @@ variable "private_subnet_cidrs" {
  type        = list(string)
  description = "Private Subnet CIDR values"
 }
+
+variable "availability_zones" {
+  type = list(string)
+  default = ["us-east-1a", "us-east-1b", "us-east-1c"]
+  validation {
+    condition     = length(var.availability_zones) == 3
+    error_message = "availability_zones must have count of 3 for high availability"
+  }
+}

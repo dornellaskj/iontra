@@ -21,34 +21,11 @@ resource "aws_eip" "nat_eip" {
 
 resource "aws_nat_gateway" "nat" {
   allocation_id = aws_eip.nat_eip.id
-  subnet_id      = "${element(module.subnets.public_subnet_ids, 0)}"
+  subnet_id      = aws_subnet.public_subnet[0].id
   depends_on    = [aws_internet_gateway.ig]
   tags = {
     Name        = "nat"
     Environment = "${var.vpc_name}-nat"
   }
-}
-
-module "subnets" {
-  source = "../subnets"
-  region = var.region
-  vpc_name = var.vpc_name
-  vpc_id = aws_vpc.vpc.id
-  internet_gateway_id = aws_internet_gateway.ig.id
-  public_subnet_cidrs = var.public_subnet_cidrs
-  private_subnet_cidrs = var.private_subnet_cidrs
-}
-
-module "routing" {
-    source = "../routing"
-    region = var.region
-    vpc_name = var.vpc_name
-    vpc_id = aws_vpc.vpc.id
-    internet_gateway_id = aws_internet_gateway.ig.id
-    nat_gateway_id = aws_nat_gateway.nat.id
-    private_subnet_ids = module.subnets.private_subnet_ids
-    public_subnet_ids = module.subnets.public_subnet_ids
-    public_subnets_cidrs = module.subnets.public_subnet_cidrs
-    private_subnets_cidrs = module.subnets.private_subnet_cidrs
 }
 
