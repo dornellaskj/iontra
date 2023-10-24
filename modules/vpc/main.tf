@@ -1,6 +1,3 @@
-provider "aws" {
-  region = var.region
-}
 
 resource "aws_vpc" "vpc" {
   cidr_block = "10.0.0.0/16"
@@ -14,43 +11,48 @@ resource "aws_vpc" "vpc" {
 resource "aws_internet_gateway" "ig" {
   vpc_id = "${aws_vpc.vpc.id}"
   tags = {
-    Name        = "${vpc_name}-igw"
+    Name = "${var.vpc_name}-igw"
   }
 }
 
 resource "aws_eip" "nat_eip" {
-  vpc        = true
   depends_on = [aws_internet_gateway.ig]
 }
 
 resource "aws_subnet" "subnet" {
-  vpc_id = aws_vpc.this.id
+  vpc_id = aws_vpc.vpc.id
   cidr_block = "10.0.1.0/24"
   
 }
 
 resource "aws_nat_gateway" "nat" {
   allocation_id = "${aws_eip.nat_eip.id}"
-  subnet_id     = "${element(aws_subnet.public_subnet.*.id, 0)}"
+  subnet_id     = "${element(aws_subnet.subnet.*.id, 0)}"
   depends_on    = [aws_internet_gateway.ig]
   tags = {
     Name        = "nat"
-    Environment = "${vpc_name}-nat"
+    Environment = "${var.vpc_name}-nat"
   }
 }
 
 module "subnets" {
-  source = "./subnets"
-  region = var.main_region
+  source = "../subnets"
+  region = var.region
   vpc_name = var.vpc_name
   vpc_id = aws_vpc.vpc.id
+  internet_gateway_id = aws_internet_gateway.ig.id
 }
 
 module "routing" {
-    source = "./routing"
-    region = var.main_region
+    source = "../routing"
+    region = var.region
     vpc_name = var.vpc_name
+    vpc_id = aws_vpc.vpc.id
     internet_gateway_id = aws_internet_gateway.ig.id
     nat_gateway_id = aws_nat_gateway.nat.id
+    private_subnet_ids = module.subnets.private_subnet_ids
+    public_subnet_ids = module.subnets.public_subnet_ids
+    public_subnets_cidrs = module.subnets.public_subnet_cidrs
+    private_subnets_cidrs = module.subnets.private_subnet_cidrs
 }
 
